@@ -1,28 +1,22 @@
-# Use a base image that includes Python and other dependencies
-FROM python:3.9-alpine
+# Use Python 3.9 slim-buster as the base image
+FROM python:3.9-slim-buster
 
-USER root
-RUN apt-get update
-RUN apt-get install -y git
-RUN apt-get install -y libpq-dev
+# Copy requirements file first to leverage Docker's cache
+COPY classifier_requirements.txt /requirements.txt
 
-# Set the working directory inside the container
+# Install git
+RUN apt-get update && \
+    apt-get install -y git && \
+    pip install --no-cache-dir -r /requirements.txt && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Set the working directory in the container
 WORKDIR /app
 
-# Copy your model file and any other necessary files into the container
 COPY xgboost.pkl /app/model.pkl
 COPY framework /app/framework
-COPY classifier_model_api.py /app/app.py
-COPY classifier_requirements.txt /app/requirements.txt
+COPY classifier_model_api.py /app/app.py 
 
-# Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Expose the port your Flask app will run on
-EXPOSE 80
-
-# Command to run your Flask app
+# Define default command to run when the container starts
 CMD ["python", "app.py"]
-
-# docker run --rm -p 80:80 model-xgboost
-# sudo docker build -f classifier_model.Dockerfile -t model-xgboost .
