@@ -4,6 +4,9 @@ FROM python:3.9-slim-buster
 # Copy requirements file first to leverage Docker's cache
 COPY classifier_requirements.txt /requirements.txt
 
+# Define build argument
+ARG MODEL_TYPE
+
 # Install git
 RUN apt-get update && \
     apt-get install -y git && \
@@ -14,7 +17,7 @@ RUN apt-get update && \
 # Set the working directory in the container
 WORKDIR /app
 
-COPY xgboost.pkl /app/model.pkl
+COPY ${MODEL_TYPE}.pkl /app/model.pkl
 COPY framework /app/framework
 COPY classifier_model_api.py /app/app.py 
 
