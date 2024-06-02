@@ -7,5 +7,6 @@ catboost~=1.2.3
 scipy~=1.11.4
 xgboost~=2.0.3
 importlib-metadata~=7.0.0
-Flask~=3.0.3
+requests==2.32.2
+Flask~=2.2.3
 git+https://github.com/MooArnon/space-time-modeling.git

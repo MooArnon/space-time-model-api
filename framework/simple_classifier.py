@@ -15,8 +15,7 @@ from space_time_modeling.utilities import load_instance
 def prediction(
         path: str, 
         data: dict, 
-        logger: logging.Logger, 
-        model_type: str    
+        logger: logging.Logger,   
 ) -> float:
     # Load model warpper
     model_wrapper: ClassifierWrapper = load_instance(path)
@@ -34,7 +33,7 @@ def prediction(
         return pred
         
     except SystemError:
-        logger.error(f"Error at {model_type}")
-        raise SystemError(f"Error at {model_type}")
+        logger.error("Error at prediction")
+        raise SystemError("Error at prediction")
 
 ##############################################################################

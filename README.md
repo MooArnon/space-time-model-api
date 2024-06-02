@@ -2,4 +2,6 @@
 A constructor for prediction API
 
 # To run
-docker run --rm -p 80:80 ${image_tag}
+```bash
+docker run --rm -it registry.digitalocean.com/space-time-image-registry/catboost ${feast_endpoint} ${entity}
+```

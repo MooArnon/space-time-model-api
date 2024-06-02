@@ -8,3 +8,6 @@ config["MODEL_TYPE_MAPPING"] = {
     "dnn": "deep_classifier_model",
     "rnn": "deep_classifier_model",
 }
+
+config["FEATURE_TYPE"] = "complete_feature"
+config["ENTITY_KEY"] = "id"
