@@ -24,6 +24,7 @@ def build_image(
         "--build-arg", 
         f"MODEL_TYPE={model_type}", 
         dockerfile_path,
+        "--no-cache"
     ]
     try:
         print(f"Building Docker image {model_type} for model type {model_type}...")

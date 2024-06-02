@@ -54,3 +54,5 @@ if __name__ == "__main__":
     # Run the code
     args = parser.parse_args()
     main(args.registry_endpoint, args.model_type)
+
+##############################################################################

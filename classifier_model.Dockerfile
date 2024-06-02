@@ -10,16 +10,21 @@ ARG MODEL_TYPE
 # Install git
 RUN apt-get update && \
     apt-get install -y git && \
-    pip install --no-cache-dir -r /requirements.txt && \
+    pip install --no-cache-dir -r /requirements.txt --timeout 200 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 # Set the working directory in the container
 WORKDIR /app
 
+
 COPY ${MODEL_TYPE}.pkl /app/model.pkl
+
 COPY framework /app/framework
+COPY config /app/config
+COPY utils /app/utils
+
 COPY classifier_model_api.py /app/app.py 
 
 # Define default command to run when the container starts
-CMD ["python", "app.py"]
+ENTRYPOINT ["python", "app.py"]

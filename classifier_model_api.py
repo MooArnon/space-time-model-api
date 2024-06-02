@@ -2,18 +2,18 @@
 # Import #
 ##############################################################################
 
+import argparse
 import logging
 import joblib
 
-from flask import Flask, request
+import requests
 
+from config.config import config
 from framework import prediction
 
 ###########
 # Statics #
 ##############################################################################
-
-app = Flask(__name__)
 
 # Load the pre-trained machine learning model
 path = joblib.load('model.pkl')
@@ -29,8 +29,7 @@ logging.basicConfig(
 # API #
 ##############################################################################
 
-@app.route('/predict', methods=['POST'])
-def predict():
+def predict(end_point: str, entity: int):
     """Predict fuction
 
     Parameters
@@ -45,29 +44,55 @@ def predict():
     SystemError
         If any error occure
     """
-    
-    request_data = request.get_json()
-    
-    if not request_data:
-        raise ValueError("No data provided")
-    
-    data = request_data.get('data')
-    model_type = request_data.get('model_type')
-        
-    pred = prediction(
-        path = "model.pkl", 
-        data = data,
-        logger = logger,
-        model_type = model_type,
-    )
-    
-    return {
-        "prediction": pred
+    fe_store_payload = {
+        "feature_service": config["FEATURE_TYPE"],
+        "entity_rows": [
+            {
+                config["ENTITY_KEY"]: entity
+            }
+        ]
     }
+    try:
+        # request data from faeture store
+        request_data = requests.get(end_point, json=fe_store_payload).json()
+        logger.info("Request data success")
+        
+        if not request_data:
+            raise ValueError("No data provided")
+        
+        # Prediction
+        pred = prediction(
+            path = "model.pkl", 
+            data = request_data,
+            logger = logger,
+        )
+        logger.info(f"PREDICTION:{pred}")
+        
+    except Exception as e:
+        logger.error(f"Prediction failed: {e}")
+
+##############################################################################
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(
+        description="Make predictions using an API endpoint"
+    )
+    parser.add_argument(
+        "endpoint", 
+        type=str, 
+        help="URL of the API endpoint",
+    )
+    parser.add_argument(
+        "entity", 
+        type=int, 
+        help="Entity value to be used in the prediction",
+    )
+    return parser.parse_args()
 
 ##############################################################################
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=80)
+    args = parse_arguments()
+    predict(args.endpoint, args.entity)
 
 ##############################################################################
