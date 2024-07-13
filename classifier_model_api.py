@@ -52,24 +52,20 @@ def predict(end_point: str, entity: int):
             }
         ]
     }
-    try:
-        # request data from faeture store
-        request_data = requests.get(end_point, json=fe_store_payload).json()
-        logger.info("Request data success")
-        
-        if not request_data:
-            raise ValueError("No data provided")
-        
-        # Prediction
-        pred = prediction(
-            path = "model.pkl", 
-            data = request_data,
-            logger = logger,
-        )
-        logger.info(f"PREDICTION:{pred}")
-        
-    except Exception as e:
-        logger.error(f"Prediction failed: {e}")
+    # request data from faeture store
+    request_data = requests.get(end_point, json=fe_store_payload).json()
+    logger.info("Request data success")
+    
+    if not request_data:
+        raise ValueError("No data provided")
+    
+    # Prediction
+    pred = prediction(
+        path = "model.pkl", 
+        data = request_data,
+        logger = logger,
+    )
+    logger.info(f"PREDICTION:{pred}")
 
 ##############################################################################
 
