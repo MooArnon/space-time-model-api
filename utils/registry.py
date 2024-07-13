@@ -17,6 +17,7 @@ def build_image(
         "sudo",
         "docker", 
         "build", 
+        "--platform=linux/amd64",
         "-f",
         f"{docker_file_name}.Dockerfile",
         "-t", 

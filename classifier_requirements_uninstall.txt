@@ -1,0 +1,8 @@
+xgboost
+catboost
+seaborn
+tqdm
+plotly 
+patsy
+matplotlib 
+statsmodels

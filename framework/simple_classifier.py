@@ -2,11 +2,10 @@
 # Import #
 ##############################################################################
 
-import pandas as pd
+import pickle
 import logging
 
-from space_time_modeling.modeling import ClassifierWrapper
-from space_time_modeling.utilities import load_instance
+import pandas as pd
 
 #############
 # Framework #
@@ -17,15 +16,20 @@ def prediction(
         data: dict, 
         logger: logging.Logger,   
 ) -> float:
-    # Load model warpper
-    model_wrapper: ClassifierWrapper = load_instance(path)
+    
+    with open(path, "rb") as f:
+        model_wrapper = pickle.load(f)
     
     # Try and if error raise SystemError
     try:
         
         # initiate the data frame
-        data_df = pd.DataFrame(data=data).drop(columns=["id"])\
+        data_df = pd.DataFrame(data=data, index=[0]).drop(columns=["id"])\
             [list(model_wrapper.feature)]
+        
+        # Check null
+        if data_df.isna().any().any():
+            raise ValueError("Feature containe Null")
 
         # Predict
         pred = model_wrapper(data_df)
