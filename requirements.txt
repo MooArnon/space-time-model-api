@@ -1,2 +1,2 @@
 requests==2.32.3
-git+https://github.com/MooArnon/space-time-modeling.git
+git+https://github.com/MooArnon/space-time-modeling.git@v1.1.1

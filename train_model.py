@@ -45,14 +45,14 @@ def train_model() -> None:
         engine = "classification",
         label_column = label_column,
         feature_column = feature_column,
-        result_path = os.path.join("classifier"),
+        result_path = os.path.join("xgboost"),
         test_size = 0.15,
-        n_iter = 15,
+        n_iter = 50,
     )
     
     modeling.modeling(
         df = df, 
-        model_name_list=['random_forest', 'knn', 'logistic_regression'],
+        model_name_list=['xgboost'],
     )
     
 ########
