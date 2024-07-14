@@ -1,7 +1,7 @@
 config = {}
 config["MODEL_TYPE_MAPPING"] = {
     "random_forest": "classifier_model",
-    "catboost": "classifier_model",
+    "catboost": "catboost_model",
     "knn": "classifier_model",
     "logistic_regression": "classifier_model",
     "xgboost": "classifier_model",
