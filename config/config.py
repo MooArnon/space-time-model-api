@@ -4,7 +4,7 @@ config["MODEL_TYPE_MAPPING"] = {
     "catboost": "catboost_model",
     "knn": "classifier_model",
     "logistic_regression": "classifier_model",
-    "xgboost": "classifier_model",
+    "xgboost": "xgboost_model",
     "dnn": "deep_classifier_model",
     "rnn": "deep_classifier_model",
 }
