@@ -40,4 +40,37 @@ def prediction(
         logger.error("Error at prediction")
         raise SystemError("Error at prediction")
 
+############################################################################## 
+
+def deep_prediction(
+        path: str, 
+        data: dict, 
+        logger: logging.Logger,   
+) -> float:
+    
+    with open(path, "rb") as f:
+        model_wrapper = pickle.load(f)
+    
+    # Try and if error raise SystemError
+    try:
+        
+        # initiate the data frame
+        data_df = pd.DataFrame(data=data, index=[0]).drop(columns=["id"])\
+            [list(model_wrapper.feature)]
+        
+        # Check null
+        if data_df.isna().any().any():
+            raise ValueError("Feature containe Null")
+        
+        last_row = data_df[model_wrapper.feature].iloc[-1].to_list()
+
+        # Predict
+        pred = model_wrapper(last_row, detensor=True)
+        
+        return pred
+        
+    except SystemError:
+        logger.error("Error at prediction")
+        raise SystemError("Error at prediction")
+
 ##############################################################################

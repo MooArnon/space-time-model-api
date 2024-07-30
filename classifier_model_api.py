@@ -9,7 +9,7 @@ import joblib
 import requests
 
 from config.config import config
-from framework import prediction
+from framework import prediction, deep_prediction
 
 ###########
 # Statics #
@@ -29,20 +29,22 @@ logging.basicConfig(
 # API #
 ##############################################################################
 
-def predict(end_point: str, entity: int):
+def predict(end_point: str, entity: int, is_deep: bool):
     """Predict fuction
 
     Parameters
     ----------
     data : Union[dict, pd.DataFrame]
-        If dict, convert to dataframe
+        If dict, convert to dataframe.
     model_type : str
-        Assigned for the differeces data prepare logic
+        Assigned for the differeces data prepare logic.
+    is_deep: bool
+        if True, using deep prediction protocol.
 
     Raises
     ------
-    SystemError
-        If any error occure
+    ValueError("No data provided")
+    
     """
     fe_store_payload = {
         "feature_service": config["FEATURE_TYPE"],
@@ -60,11 +62,21 @@ def predict(end_point: str, entity: int):
         raise ValueError("No data provided")
     
     # Prediction
-    pred = prediction(
-        path = "model.pkl", 
-        data = request_data,
-        logger = logger,
-    )
+    if is_deep is True:
+        pred = deep_prediction(
+            path = "model.pkl", 
+            data = request_data,
+            logger = logger,
+        )[-1]
+    elif is_deep is False:
+        pred = prediction(
+            path = "model.pkl", 
+            data = request_data,
+            logger = logger,
+        )
+    else:
+        raise ValueError("is_deep need to be either True or False")
+    
     logger.info(f"PREDICTION:{pred}")
 
 ##############################################################################
@@ -83,12 +95,35 @@ def parse_arguments():
         type=int, 
         help="Entity value to be used in the prediction",
     )
+    
+    parser.add_argument(
+        "is_deep", 
+        help="If true, using deep prediction protocol",
+        type=str2bool, 
+        nargs='?', 
+        const=True, 
+        default=False,
+    )
+    
     return parser.parse_args()
+
+##############################################################################
+
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
 
 ##############################################################################
 
 if __name__ == '__main__':
     args = parse_arguments()
-    predict(args.endpoint, args.entity)
+    predict(args.endpoint, args.entity, args.is_deep)
 
 ##############################################################################

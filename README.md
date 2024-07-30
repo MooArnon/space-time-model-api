@@ -12,4 +12,8 @@ python deploy_model.py ${registry_endpoint} ${model_type}
 ```
 python deploy_model.py registry.digitalocean.com/space-time-image-registry xgboost
 
-'docker run --rm random_forest python classifier_model_api.py http://157.245.158.204:6000/feature/online_feature/fetch 11004'
+'docker run --rm deep python classifier_model_api.py http://157.245.158.204:6000/feature/online_feature/fetch 11004'
+
+sudo docker build --platform=linux/amd64 -f deep_model.Dockerfile -t deep --build-arg MODEL_TYPE=dnn_wrapper . --no-cache
+
+sudo docker build --platform=linux/amd64 -f classifier_model.Dockerfile -t random_forest --build-arg MODEL_TYPE=random_forest . --no-cache

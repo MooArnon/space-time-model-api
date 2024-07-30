@@ -8,10 +8,11 @@ import json
 
 import numpy as np
 import pandas as pd
+import torch.nn as nn
 import requests
 
 from space_time_modeling.modeling import modeling_engine
-from space_time_modeling.modeling import ClassificationModel 
+from space_time_modeling.modeling import DeepClassificationModel 
 from space_time_modeling.utilities import load_instance
 
 #########
@@ -41,25 +42,37 @@ def train_model() -> None:
     feature_column.remove(label_column)
     # return df.columns
     # Train model
-    modeling: ClassificationModel = modeling_engine(
-        engine = "classification",
+    modeling: DeepClassificationModel = modeling_engine(
+        engine = "deep_classification",
         label_column = label_column,
         feature_column = feature_column,
-        result_path = os.path.join("100-it"),
-        test_size = 0.15,
+        result_path = os.path.join("nn_100_it"),
+        mode ='random_search',
         n_iter = 100,
+        dnn_params_dict = {
+            'lr': [0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 10],
+            'epochs':[10, 50, 100, 500, 1000],
+            'criterion':[nn.BCELoss(), nn.HuberLoss()],
+            'module__hidden_layers': [
+                [4],
+                [4, 4],
+                [4, 4, 4],
+                [8],
+                [8, 8],
+                [8, 16, 8],
+                [16, 32, 16],
+                [8, 16, 16, 8],
+                [16, 32, 32, 16],
+                [8, 16, 32, 16, 8],
+            ],
+            'module__dropout': [0.1, 0.15, 0.2, 0.25]
+        }
     )
     
     modeling.modeling(
-        df = df, 
-        model_name_list=[
-            'xgboost', 
-            'catboost', 
-            'random_forest', 
-            'logistic_regression', 
-            'knn',
-            # 'svc',
-        ],
+        df = df,
+        model_name_list = ['dnn'],
+        batch_size = 8,
     )
     
 ########
