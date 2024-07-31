@@ -4,11 +4,11 @@
 
 import argparse
 import logging
+import os
 import joblib
 
-import requests
+from space_time_pipeline.data_warehouse import PostgreSQLDataWarehouse
 
-from config.config import config
 from framework import prediction
 
 ###########
@@ -29,43 +29,52 @@ logging.basicConfig(
 # API #
 ##############################################################################
 
-def predict(end_point: str, entity: int):
-    """Predict fuction
+def predict(asset: str):
+    """
+    Predict function
 
     Parameters
     ----------
-    data : Union[dict, pd.DataFrame]
-        If dict, convert to dataframe
-    model_type : str
-        Assigned for the differeces data prepare logic
+    asset : str
+        The asset for which the prediction is to be made.
 
     Raises
     ------
     SystemError
-        If any error occure
+        If any error occurs.
     """
-    fe_store_payload = {
-        "feature_service": config["FEATURE_TYPE"],
-        "entity_rows": [
-            {
-                config["ENTITY_KEY"]: entity
-            }
-        ]
-    }
-    # request data from faeture store
-    request_data = requests.get(end_point, json=fe_store_payload).json()
-    logger.info("Request data success")
-    
-    if not request_data:
-        raise ValueError("No data provided")
-    
-    # Prediction
-    pred = prediction(
-        path = "model.pkl", 
-        data = request_data,
-        logger = logger,
-    )
-    logger.info(f"PREDICTION:{pred}")
+    try:
+        select_raw_data = os.path.join("framework", "sql", "select_data.sql")
+        sql = PostgreSQLDataWarehouse()
+
+        # Fetching data
+        df = sql.select(
+            logger=logger,
+            file_path=select_raw_data,
+            replace_condition_dict={'<ASSET>': asset}
+        )
+
+        # Closing the SQL connection
+        sql.close_connection()
+
+        # Ensure the DataFrame contains the 'price' column and convert its type
+        if 'price' not in df.columns:
+            raise SystemError("DataFrame does not contain the 'price' column.")
+        
+        df = df.astype({'price': 'float64'})
+
+        # Prediction
+        pred = prediction(
+            path="model.pkl",
+            data=df,
+            logger=logger,
+        )
+
+        logger.info(f"PREDICTION: {pred}")
+        
+    except Exception as e:
+        logger.error(f"An error occurred: {e}")
+        raise SystemError(f"An error occurred during prediction: {e}")
 
 ##############################################################################
 
@@ -74,14 +83,9 @@ def parse_arguments():
         description="Make predictions using an API endpoint"
     )
     parser.add_argument(
-        "endpoint", 
+        "asset", 
         type=str, 
-        help="URL of the API endpoint",
-    )
-    parser.add_argument(
-        "entity", 
-        type=int, 
-        help="Entity value to be used in the prediction",
+        help="Symbol of asset",
     )
     return parser.parse_args()
 
@@ -89,6 +93,6 @@ def parse_arguments():
 
 if __name__ == '__main__':
     args = parse_arguments()
-    predict(args.endpoint, args.entity)
+    predict(args.asset)
 
 ##############################################################################

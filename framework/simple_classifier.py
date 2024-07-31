@@ -13,7 +13,7 @@ import pandas as pd
 
 def prediction(
         path: str, 
-        data: dict, 
+        data: pd.DataFrame, 
         logger: logging.Logger,   
 ) -> float:
     
@@ -23,16 +23,17 @@ def prediction(
     # Try and if error raise SystemError
     try:
         
-        # initiate the data frame
-        data_df = pd.DataFrame(data=data, index=[0]).drop(columns=["id"])\
-            [list(model_wrapper.feature)]
-        
         # Check null
-        if data_df.isna().any().any():
+        if data.isna().any().any():
             raise ValueError("Feature containe Null")
 
+        logger.info(f"Model: {model_wrapper.name}")
+        logger.info(f"Version: {model_wrapper.version}")
+        logger.info(f"Feature: {model_wrapper.feature}")
+        logger.info(f"Scraped data at: {data.iloc[[-1]]['scraped_timestamp'].values}")
+        
         # Predict
-        pred = model_wrapper(data_df)
+        pred = model_wrapper(data)
         
         return pred
         
