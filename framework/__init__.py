@@ -1,1 +1,1 @@
-from .simple_classifier import prediction
+from .simple_classifier import prediction, evaluation

@@ -163,3 +163,6 @@ catboost_info
 classifier*/
 
 env_train/
+
+.credential/
+local/

@@ -9,7 +9,7 @@ import joblib
 
 from space_time_pipeline.data_warehouse import PostgreSQLDataWarehouse
 
-from framework import prediction
+from framework import prediction, evaluation
 
 ###########
 # Statics #
@@ -78,14 +78,71 @@ def predict(asset: str):
 
 ##############################################################################
 
+def evaluate(asset: str, evaluation_period: int) -> None:
+    try:
+        select_raw_data = os.path.join(
+            "framework", 
+            "sql", 
+            "select_evaluate.sql",
+        )
+        sql = PostgreSQLDataWarehouse()
+
+        # Fetching data
+        # 170 as one week of evaluation
+        df = sql.select(
+            logger=logger,
+            file_path=select_raw_data,
+            replace_condition_dict={
+                '<ASSET>': asset,
+                '<LIMIT>': evaluation_period,
+            }
+        )
+
+        # Closing the SQL connection
+        sql.close_connection()
+
+        # Ensure the DataFrame contains the 'price' column and convert its type
+        if 'price' not in df.columns:
+            raise SystemError("DataFrame does not contain the 'price' column.")
+        
+        df = df.astype({'price': 'float64'})
+
+        # Prediction
+        metric = evaluation(
+            path="model.pkl",
+            data=df,
+            logger=logger,
+        )
+        logger.info(f"METRIC: {metric}")
+        
+    except Exception as e:
+        logger.error(f"An error occurred: {e}")
+        raise SystemError(f"An error occurred during prediction: {e}")
+
+##############################################################################
+
 def parse_arguments():
     parser = argparse.ArgumentParser(
         description="Make predictions using an API endpoint"
     )
+    
     parser.add_argument(
-        "asset", 
+        "mode", 
+        type=str, 
+        help="Calling mode, predict or evaluate",
+    )
+    
+    parser.add_argument(
+        "--asset", 
         type=str, 
         help="Symbol of asset",
+    )
+    
+    parser.add_argument(
+        "--evaluation-period",  
+        type=int,  
+        default=170, 
+        help="Integer of periods to use for evaluation (default: 170)"
     )
     return parser.parse_args()
 
@@ -93,6 +150,12 @@ def parse_arguments():
 
 if __name__ == '__main__':
     args = parse_arguments()
-    predict(args.asset)
+    
+    if args.mode == 'evaluate':
+        evaluate(args.asset, args.evaluation_period)
+    elif args.mode == 'predict':
+        predict(args.asset)
+    else:
+        raise ValueError("Mode could be either predict or evaluate ")
 
 ##############################################################################
