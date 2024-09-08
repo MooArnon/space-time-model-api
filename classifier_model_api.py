@@ -3,11 +3,15 @@
 ##############################################################################
 
 import argparse
+from datetime import datetime, timezone
 import logging
 import os
 import joblib
+import json
+import uuid
 
 from space_time_pipeline.data_warehouse import PostgreSQLDataWarehouse
+from space_time_pipeline.data_lake import S3DataLake
 
 from framework import prediction, evaluation
 
@@ -27,6 +31,46 @@ logging.basicConfig(
 
 #######
 # API #
+##############################################################################
+
+def prediction_to_s3(
+        asset: str,
+        model_type: str,
+        s3_bucket: str,
+        prefix: str,
+) -> None:
+    current_timestamp = datetime.now(timezone.utc)
+    current_timestamp_formatted = current_timestamp\
+        .strftime(format="%Y%m%d_%H%M%S")
+    
+    # File name
+    file_name = f"{model_type}_{asset}_{current_timestamp_formatted}.json"
+    
+    # Modify S3 path
+    s3 = S3DataLake(logger = logger)
+    
+    # Prediction
+    pred, model_id = predict(asset = asset)
+
+    # Finalize payload
+    prediction_payload = {
+        "id":[str(uuid.uuid4())],
+        "asset":[asset],
+        "model_type":[model_type],
+        "model_id":[model_id],
+        "prediction":[pred],
+        "predicted_timestamp":[str(current_timestamp)],
+    } 
+    
+    with open(f"{file_name}", "w") as json_file:
+        json.dump(prediction_payload, json_file, indent=4)
+    
+    s3.upload_to_data_lake(
+        s3_bucket = s3_bucket,
+        prefix = prefix,
+        target_file = file_name,
+    )
+    
 ##############################################################################
 
 def predict(asset: str):
@@ -64,13 +108,15 @@ def predict(asset: str):
         df = df.astype({'price': 'float64'})
 
         # Prediction
-        pred = prediction(
+        pred, model_id = prediction(
             path="model.pkl",
             data=df,
             logger=logger,
         )
 
         logger.info(f"PREDICTION: {pred}")
+        
+        return pred, model_id
         
     except Exception as e:
         logger.error(f"An error occurred: {e}")
@@ -133,9 +179,15 @@ def parse_arguments():
     )
     
     parser.add_argument(
-        "--asset", 
+        "asset", 
         type=str, 
         help="Symbol of asset",
+    )
+    
+    parser.add_argument(
+        "model_type", 
+        type=str, 
+        help="Type of model",
     )
     
     parser.add_argument(
@@ -144,6 +196,21 @@ def parse_arguments():
         default=170, 
         help="Integer of periods to use for evaluation (default: 170)"
     )
+    
+    parser.add_argument(
+        "--s3-bucket",  
+        type=str,  
+        default="space-time-raw", 
+        help="Bucket to upload raw data"
+    )
+    
+    parser.add_argument(
+        "--prefix",  
+        type=str,  
+        default="raw/prediction/classifier/to_be_processed", 
+        help="Prefix to store raw file"
+    )
+
     return parser.parse_args()
 
 ##############################################################################
@@ -154,7 +221,7 @@ if __name__ == '__main__':
     if args.mode == 'evaluate':
         evaluate(args.asset, args.evaluation_period)
     elif args.mode == 'predict':
-        predict(args.asset)
+        prediction_to_s3(args.asset, args.model_type, args.s3_bucket, args.prefix)
     else:
         raise ValueError("Mode could be either predict or evaluate ")
 

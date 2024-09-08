@@ -67,23 +67,20 @@ def train_model() -> None:
         engine = "classification",
         label_column = label_column,
         feature_column = feature_column,
-        result_path = os.path.join("test_wrapper"),
-        test_size = 0.03,
-        n_iter = 3,
+        result_path = os.path.join("classifier__015ts_40iter_30fr"),
+        test_size = 0.015,
+        n_iter = 20,
     )
-    
-    print(df_train.columns)
-    print(df_train.shape)
     
     modeling.modeling(
         df = df_train, 
         preprocessing_pipeline=fe,
         model_name_list=[
             'xgboost', 
-            # 'catboost', 
+            'catboost', 
             'random_forest', 
-            # 'logistic_regression', 
-            # 'knn'
+            'logistic_regression', 
+            'knn'
         ],
         feature_rank = 30,
     )

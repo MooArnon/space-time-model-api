@@ -15,7 +15,7 @@ def prediction(
         path: str, 
         data: pd.DataFrame, 
         logger: logging.Logger,   
-) -> float:
+) -> tuple[float, str]:
     
     with open(path, "rb") as f:
         model_wrapper = pickle.load(f)
@@ -35,7 +35,7 @@ def prediction(
         # Predict
         pred = model_wrapper(data)
         
-        return pred
+        return pred, model_wrapper.version
         
     except SystemError:
         logger.error("Error at prediction")
