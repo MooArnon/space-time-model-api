@@ -1,16 +1,10 @@
 # Use the Python 3.9 slim base image
-FROM python:3.9-slim
+FROM public.ecr.aws/lambda/python:3.9
 
 # Install build dependencies
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    gcc \
-    gfortran \
-    libgomp1 \
-    git && \
-    rm -rf /var/lib/apt/lists/*
+RUN yum update -y && yum install -y git
 
-COPY requirements.txt classifier_requirements_uninstall.txt /
+COPY requirements.txt classifier_requirements_uninstall.txt ${LAMBDA_TASK_ROOT}
 
 # Install numpy, scipy, and scikit-learn
 RUN pip install --no-cache-dir --upgrade pip setuptools && \
@@ -18,14 +12,13 @@ RUN pip install --no-cache-dir --upgrade pip setuptools && \
     pip uninstall -y -r classifier_requirements_uninstall.txt && \
     rm requirements.txt classifier_requirements_uninstall.txt
 
-# Set the working directory
-WORKDIR /app
-
 ARG MODEL_TYPE
-COPY ${MODEL_TYPE}.pkl /app/model.pkl
+COPY ${MODEL_TYPE}.pkl ${LAMBDA_TASK_ROOT}/${MODEL_TYPE}.pkl
 
 # Copy your application code to the container
-COPY framework /app/framework
-COPY config /app/config
-COPY utils /app/utils
-COPY classifier_model_api.py /app/classifier_model_api.py
+COPY framework ${LAMBDA_TASK_ROOT}/framework
+COPY config ${LAMBDA_TASK_ROOT}/config
+COPY utils ${LAMBDA_TASK_ROOT}/utils
+COPY *.py ${LAMBDA_TASK_ROOT}
+
+CMD ["classifier_model_api.handler"]
