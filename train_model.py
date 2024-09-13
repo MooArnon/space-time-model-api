@@ -33,7 +33,7 @@ def train_model() -> None:
         "percent_diff_ema",
     ]
     
-    n_window = [1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 25, 75, 99]
+    n_window = [1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 25, 30,]
     ununsed_feature = [f"ema_{win}" for win in n_window]
     
     df_path = os.path.join("local", "btc-all.csv")
@@ -67,9 +67,9 @@ def train_model() -> None:
         engine = "classification",
         label_column = label_column,
         feature_column = feature_column,
-        result_path = os.path.join("classifier__015ts_40iter_30fr"),
+        result_path = os.path.join("classifier__minimal"),
         test_size = 0.015,
-        n_iter = 20,
+        n_iter = 5,
     )
     
     modeling.modeling(
