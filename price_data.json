@@ -105,6 +105,8 @@
             "49": 55389.28
         }
     },
+    "s3_bucket_model": "space-time-model",
+    "prefix_model":"classifier/btc/",
     "asset": "BTCUSDT",
     "limit": 50,
     "database": "warehouse",

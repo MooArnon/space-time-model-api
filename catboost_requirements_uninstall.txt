@@ -1,7 +1,0 @@
-xgboost
-seaborn
-tqdm
-plotly 
-patsy
-matplotlib 
-statsmodels

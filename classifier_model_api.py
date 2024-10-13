@@ -8,7 +8,7 @@ import logging
 import os
 import json
 import uuid
-import shutil
+import traceback
 
 import boto3
 import pandas as pd
@@ -45,6 +45,8 @@ def prediction_to_s3(
         data_dict: dict,
         latest_id: str,
         model_type: str = "",
+        bucket_name: str = "",
+        prefix: str = "",
 ) -> None:
     """Predict result and push predicted payload to S3
 
@@ -74,7 +76,12 @@ def prediction_to_s3(
     file_path = f"/tmp/{file_name}"
     
     # Prediction
-    pred, model_id = predict(data_dict=data_dict, model_type=model_type)
+    pred, model_id = predict(
+        data_dict=data_dict, 
+        model_type=model_type, 
+        bucket_name=bucket_name, 
+        prefix=prefix,
+    )
     logger.info(f"{model_id} predicted {pred}")
 
     # Finalize payload
@@ -98,7 +105,7 @@ def prediction_to_s3(
     
 ##############################################################################
 
-def predict(data_dict: dict, model_type: str):
+def predict(data_dict: dict, model_type: str, bucket_name: str, prefix: str):
     """
     Predict function
 
@@ -108,12 +115,23 @@ def predict(data_dict: dict, model_type: str):
         Dictionary of data
     model_type: str
         The type of model using for prediction
+    bucket_name: str
+        S3 bucket to store model
+    prefix: str
+        prefix to model
 
     Raises
     ------
     SystemError
         If any error occurs.
     """
+    # Path to model
+    local_file_path = f"{model_type}.pkl"
+    object_key = f'{prefix}{model_type}/{model_type}.pkl'
+
+    # Upload the file with the prefix
+    s3_client.download_file(bucket_name, object_key, local_file_path, )
+    
     try:
         df = pd.DataFrame(data_dict)
         
@@ -136,6 +154,7 @@ def predict(data_dict: dict, model_type: str):
         
     except Exception as e:
         logger.error(f"An error occurred: {e}")
+        traceback.print_exc()
         raise SystemError(f"An error occurred during prediction: {e}")
 
 ##############################################################################
@@ -208,7 +227,7 @@ def upload_file_to_s3(file_path: str, bucket_name: str, s3_key: str) -> None:
 # Lambda handel #
 ##############################################################################
 
-def handler(event, context):
+def handler(event = None, context = None):
     """
     AWS Lambda handler function.
     
@@ -219,6 +238,8 @@ def handler(event, context):
     file_path = None
     
     # Get the list of assets from the event input
+    s3_bucket_model = event.get('s3_bucket_model', "")
+    prefix_model = event.get('prefix_model', "")
     asset = event.get('asset', "")
     price_data = event.get('price_data', {})
     latest_id = event.get('latest_id', {})
@@ -233,6 +254,8 @@ def handler(event, context):
             data_dict = price_data,
             latest_id = latest_id,
             model_type = model_type,
+            bucket_name = s3_bucket_model,
+            prefix = prefix_model,
         )
         os.listdir("/tmp")
         
@@ -246,6 +269,7 @@ def handler(event, context):
         }
     except Exception as e:
         logger.error(f"Error during prediction: {str(e)}")
+        traceback.print_exc()
         return {
             "statusCode": 500,
             "body": f"Error: {str(e)}"
@@ -308,7 +332,122 @@ def parse_arguments():
 ##############################################################################
 
 if __name__ == '__main__':
-    pass
+    event = {
+        "price_data": {
+            "scraped_timestamp": {
+                "0": "2024-09-07 15:00:14.000000",
+                "1": "2024-09-07 16:00:16.000000",
+                "2": "2024-09-07 17:00:16.000000",
+                "3": "2024-09-07 18:00:16.000000",
+                "4": "2024-09-07 19:00:16.000000",
+                "5": "2024-09-07 20:00:16.000000",
+                "6": "2024-09-07 21:00:16.000000",
+                "7": "2024-09-07 22:00:16.000000",
+                "8": "2024-09-07 23:00:16.000000",
+                "9": "2024-09-08 00:00:16.000000",
+                "10": "2024-09-08 01:00:16.000000",
+                "11": "2024-09-08 02:00:16.000000",
+                "12": "2024-09-08 03:00:16.000000",
+                "13": "2024-09-08 04:00:16.000000",
+                "14": "2024-09-08 05:00:16.000000",
+                "15": "2024-09-08 06:00:16.000000",
+                "16": "2024-09-08 07:00:16.000000",
+                "17": "2024-09-08 08:00:16.000000",
+                "18": "2024-09-08 09:00:16.000000",
+                "19": "2024-09-08 10:00:16.000000",
+                "20": "2024-09-08 11:00:15.000000",
+                "21": "2024-09-08 12:00:15.000000",
+                "22": "2024-09-08 13:00:15.000000",
+                "23": "2024-09-08 14:00:15.000000",
+                "24": "2024-09-08 15:00:15.000000",
+                "25": "2024-09-08 16:00:15.000000",
+                "26": "2024-09-08 17:00:15.000000",
+                "27": "2024-09-08 18:00:15.000000",
+                "28": "2024-09-08 19:00:15.000000",
+                "29": "2024-09-08 20:00:15.000000",
+                "30": "2024-09-08 21:00:15.000000",
+                "31": "2024-09-08 22:00:15.000000",
+                "32": "2024-09-08 23:00:15.000000",
+                "33": "2024-09-09 00:00:15.000000",
+                "34": "2024-09-09 01:00:15.000000",
+                "35": "2024-09-09 02:00:15.000000",
+                "36": "2024-09-09 03:00:15.000000",
+                "37": "2024-09-09 04:00:15.000000",
+                "38": "2024-09-09 05:00:15.000000",
+                "39": "2024-09-09 06:00:15.000000",
+                "40": "2024-09-09 07:00:15.000000",
+                "41": "2024-09-09 08:00:15.000000",
+                "42": "2024-09-09 09:00:15.000000",
+                "43": "2024-09-09 10:00:15.000000",
+                "44": "2024-09-09 11:00:15.000000",
+                "45": "2024-09-09 12:00:15.000000",
+                "46": "2024-09-09 13:00:15.000000",
+                "47": "2024-09-09 14:00:15.000000",
+                "48": "2024-09-09 15:00:16.000000",
+                "49": "2024-09-09 16:00:15.000000"
+            },
+            "price": {
+                "0": 54644.36,
+                "1": 54788.01,
+                "2": 54467.01,
+                "3": 54118,
+                "4": 54283.99,
+                "5": 54414,
+                "6": 54154,
+                "7": 53915.44,
+                "8": 53954,
+                "9": 54169.99,
+                "10": 54148.99,
+                "11": 54275,
+                "12": 54344,
+                "13": 54400,
+                "14": 54491.01,
+                "15": 54341,
+                "16": 54292.01,
+                "17": 54440.77,
+                "18": 54482,
+                "19": 54447.99,
+                "20": 54612.99,
+                "21": 54548.01,
+                "22": 54173,
+                "23": 54394.01,
+                "24": 54150,
+                "25": 53675.99,
+                "26": 53918.99,
+                "27": 54511.12,
+                "28": 54416.99,
+                "29": 54360,
+                "30": 54379.02,
+                "31": 54512.74,
+                "32": 54519.99,
+                "33": 54862.01,
+                "34": 55058,
+                "35": 55093.54,
+                "36": 55120.99,
+                "37": 55126.77,
+                "38": 54850.81,
+                "39": 54654,
+                "40": 54910,
+                "41": 54970.73,
+                "42": 55246,
+                "43": 55152,
+                "44": 55377.65,
+                "45": 55276.01,
+                "46": 55333.52,
+                "47": 55702,
+                "48": 54836.01,
+                "49": 55389.28
+            }
+        },
+        "s3_bucket_model": "space-time-model",
+        "prefix_model":"classifier/btc/",
+        "asset": "BTCUSDT",
+        "limit": 50,
+        "database": "warehouse",
+        "s3_bucket": "space-time-raw",
+        "prefix": "raw/prediction/classifier/to_be_processed"
+    }
+    handler(event=event)
     """
     with open("price_data.json", "r") as json_file:
         data_dict = json.load(json_file)

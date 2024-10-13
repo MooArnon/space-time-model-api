@@ -5,3 +5,4 @@ local/
 README.md
 LICENSE
 *.pkl
+price_data.json

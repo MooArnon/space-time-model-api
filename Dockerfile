@@ -1,23 +1,19 @@
-# Use the official Docker image with DinD
-FROM docker:20.10-dind
+# Use the Python 3.9 slim base image
+FROM public.ecr.aws/lambda/python:3.9
 
-# Install necessary tools
-RUN apk --no-cache add python3 py3-pip curl bash && \
-    pip3 install awscli
+# Install build dependencies
+RUN yum update -y && yum install -y git
 
-# Set the working directory
-WORKDIR /app/
+COPY requirements.txt ${LAMBDA_TASK_ROOT}
 
-# Copy necessary files into the image
-COPY . /app/
+# Install numpy, scipy, and scikit-learn
+RUN pip install --no-cache-dir --upgrade pip setuptools && \
+    pip install --no-cache-dir -r requirements.txt --timeout 600
 
-# Prebuild training image
-#RUN docker build -t train-model -f train_model.Dockerfile .
+# Copy your application code to the container
+COPY framework ${LAMBDA_TASK_ROOT}/framework
+COPY config ${LAMBDA_TASK_ROOT}/config
+COPY utils ${LAMBDA_TASK_ROOT}/utils
+COPY *.py ${LAMBDA_TASK_ROOT}
 
-# Make entrypoint script executable and add shebang
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh && \
-    sed -i '1i#!/bin/sh' /app/entrypoint.sh
-
-# Set the entrypoint
-ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["classifier_model_api.handler"]

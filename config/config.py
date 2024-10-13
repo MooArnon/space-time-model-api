@@ -22,6 +22,9 @@ config["MODEL_TYPE_MAPPING"] = {
 config["FEATURE_TYPE"] = "complete_feature"
 config["ENTITY_KEY"] = "id"
 
+config["BUCKET_MODEL"] = os.getenv('BUCKET_MODEL')
+config["PREFIX_MODEL"] = os.getenv('PREFIX_MODEL')
+
 #######
 # Env #
 ##############################################################################

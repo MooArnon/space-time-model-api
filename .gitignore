@@ -166,3 +166,5 @@ env_train/
 
 .credential/
 local/
+
+price_data.json
