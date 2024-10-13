@@ -22,5 +22,3 @@ docker run --rm -it registry.digitalocean.com/space-time-image-registry/catboost
 ```bash
 python deploy_model.py ${registry_endpoint} ${model_type}
 ```
-
-
