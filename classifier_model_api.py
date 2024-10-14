@@ -130,11 +130,18 @@ def predict(data_dict: dict, model_type: str, bucket_name: str, prefix: str):
         If any error occurs.
     """
     # Path to model
-    local_file_path = f"{model_type}.pkl"
+    local_file_path = f"/tmp/{model_type}.pkl"
     object_key = f'{prefix}{model_type}/{model_type}.pkl'
+    
+    # If the file exists, delete it
+    if os.path.exists(local_file_path):
+        os.remove(local_file_path)
+        logger.info(f"{local_file_path} deleted.")
+    else:
+        logger.info(f"{local_file_path} does not exist.")
 
     # Upload the file with the prefix
-    s3_client.download_file(bucket_name, object_key, local_file_path, )
+    s3_client.download_file(bucket_name, object_key, local_file_path)
     
     try:
         df = pd.DataFrame(data_dict)
@@ -147,7 +154,7 @@ def predict(data_dict: dict, model_type: str, bucket_name: str, prefix: str):
 
         # Prediction
         pred, model_id = prediction(
-            path=f"{model_type}.pkl",
+            path=local_file_path,
             data=df,
             logger=logger,
         )
