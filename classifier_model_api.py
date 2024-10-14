@@ -67,6 +67,10 @@ def prediction_to_s3(
     """
     if model_type == "":
         model_type = os.getenv("MODEL")
+    if bucket_name == "":
+        bucket_name = os.getenv("BUCKET_NAME_MODEL")
+    if prefix == "":
+        prefix = os.getenv("PREFIX_MODEL")
     current_timestamp = datetime.now(timezone.utc)
     current_timestamp_formatted = current_timestamp\
         .strftime(format="%Y%m%d_%H%M%S")
