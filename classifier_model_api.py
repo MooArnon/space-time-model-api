@@ -130,7 +130,7 @@ def predict(data_dict: dict, model_type: str, bucket_name: str, prefix: str):
         If any error occurs.
     """
     # Path to model
-    local_file_path = f"{model_type}.pkl"
+    local_file_path = f"/tmp/{model_type}.pkl"
     object_key = f'{prefix}{model_type}/{model_type}.pkl'
 
     # Upload the file with the prefix
@@ -147,7 +147,7 @@ def predict(data_dict: dict, model_type: str, bucket_name: str, prefix: str):
 
         # Prediction
         pred, model_id = prediction(
-            path=f"{model_type}.pkl",
+            path=f"/tmp/{model_type}.pkl",
             data=df,
             logger=logger,
         )
