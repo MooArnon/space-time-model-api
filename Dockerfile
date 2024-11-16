@@ -2,7 +2,7 @@
 FROM public.ecr.aws/lambda/python:3.9
 
 # Install build dependencies
-RUN yum update -y && yum install -y git
+RUN yum update -y && yum install -y git libgomp
 
 COPY requirements.txt ${LAMBDA_TASK_ROOT}
 
