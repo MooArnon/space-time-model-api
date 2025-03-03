@@ -42,9 +42,17 @@ model_category_mapping = {
     "knn": "classifier_model",
     "logistic_regression": "classifier_model",
     "xgboost": "classifier_model",
+    "lightgbm": "classifier_model",
     "dnn": "deep_classifier_model",
     "lstm": "deep_classifier_model",
     "rnn": "deep_classifier_model",
+    "gru": "deep_classifier_model",
+    "cnn": "deep_classifier_model",
+    "dnn-short": "deep_classifier_model",
+    "lstm-short": "deep_classifier_model",
+    "rnn-short": "deep_classifier_model",
+    "gru-short": "deep_classifier_model",
+    "cnn-short": "deep_classifier_model",
 }
 
 #######
