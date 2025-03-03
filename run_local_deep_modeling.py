@@ -9,7 +9,7 @@ import pandas as pd
 from space_time_modeling.fe import ClassificationFE 
 from space_time_modeling.modeling import modeling_engine
 from space_time_modeling.modeling import DeepClassificationModel 
-from space_time_modeling.modeling.__classification_wrapper import ClassifierWrapper
+from space_time_modeling.modeling.deep_learning_model import DeepWrapper
 from space_time_modeling.utilities import load_instance
 
 #########
@@ -92,31 +92,31 @@ def test_model(path: str, type: str) -> None:
     )
     
     data_path = os.path.join(
-        "local",
-        "sample-test.csv",
+        "btc-all.csv",
     )
     
     # Load model
-    model: ClassifierWrapper = load_instance(model_path)
+    model: DeepWrapper = load_instance(model_path)
     
+    print(model.version)
     print(model.name)
-    print(model.feature)
     
     data_df = pd.read_csv(data_path)
     pred = model(data_df)
     
     print(pred)
     print('\n')
-
+    
 
 #######
 # Use #
 ##############################################################################
 
 if __name__ == "__main__":
-    train_model()
+    # train_model()
     
-    # result_path =  "deep_test_20240818_012426"
+    result_path =  "classifier_20241127_082242"
+    test_model(result_path, 'dnn-short')
     # test_model(result_path, 'lstm')
     # test_model(result_path, 'gru')
     # test_model(result_path, 'dnn')
