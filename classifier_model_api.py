@@ -13,6 +13,7 @@ import traceback
 import boto3
 import pandas as pd
 from space_time_pipeline.data_warehouse import PostgreSQLDataWarehouse
+from space_time_pipeline.nosql.dynamo_db import DynamoDB
 
 from framework import prediction, deep_prediction, evaluation
 
@@ -125,7 +126,67 @@ def prediction_to_s3(
     logger.info(f"Saved file at {file_path}")
     
     return file_path, file_name
+
+##############################################################################
+
+def prediction_to_dynamo_db(
+        asset: str,
+        data_dict: dict,
+        latest_id: str,
+        model_type: str = "",
+        bucket_name: str = "",
+        prefix: str = "",
+        table: str = "predictions"
+) -> None:
+    """Predict result and push predicted payload to S3
+
+    Parameters
+    ----------
+    asset : str
+        Symbol of asset
+    data_dict : dict
+        Dictionary of data
+    latest_id : str
+        ID to map to scraped data
+    model_type : str
+        Type of model
+    s3_bucket : str, optional
+        Working bucket to push raw json, by default None
+    prefix : str, optional
+        Prefix for push json, by default None
+    """
+    if model_type == "":
+        model_type = os.getenv("MODEL")
+    current_timestamp = datetime.now(timezone.utc)
+
+    prediction_data = {}
+    dynamo = DynamoDB()
     
+    # Prediction
+    pred, model_id = predict(
+        data_dict=data_dict, 
+        model_type=model_type, 
+        bucket_name=bucket_name, 
+        prefix=prefix,
+    )
+    logger.info(f"{model_id} predicted {pred}")
+    
+    pred_payload = {"value": pred, "confident": 1.0}
+    
+    prediction_data['asset'] = asset
+    prediction_data['model_id'] = model_id
+    prediction_data['model_type'] = model_type
+    prediction_data['prediction'] = pred_payload
+    prediction_data['record_type'] = 'MODEL'
+    prediction_data['latest_id'] = latest_id
+    prediction_data['predicted_timestamp'] = str(current_timestamp)
+
+    prediction_data = dynamo.to_decimal(prediction_data)
+    
+    response = dynamo.ingest_data(table, item=prediction_data)
+    
+    logger.info(f"Done with response: {response}")
+
 ##############################################################################
 
 def predict(data_dict: dict, model_type: str, bucket_name: str, prefix: str):
@@ -276,12 +337,10 @@ def handler(event = None, context = None):
     price_data = event.get('price_data', {})
     latest_id = event.get('latest_id', {})
     model_type = event.get('model_type', "")
-    s3_bucket = event.get('s3_bucket', "")
-    prefix = event.get('prefix', "")
-    
+
     # Call the main function with the assets list
     try:
-        file_path, file_name = prediction_to_s3(
+        prediction_to_dynamo_db(
             asset = asset,
             data_dict = price_data,
             latest_id = latest_id,
@@ -289,10 +348,6 @@ def handler(event = None, context = None):
             bucket_name = s3_bucket_model,
             prefix = prefix_model,
         )
-        os.listdir("/tmp")
-        
-        s3_key = f"{prefix}/{file_name}"
-        upload_file_to_s3(file_path, s3_bucket, s3_key)
         
         logger.info("Uploaded file at data lake")
         return {
@@ -938,8 +993,8 @@ if __name__ == '__main__':
         "asset": "BTCUSDT",
         "limit": 50,
         "database": "warehouse",
-        "s3_bucket": "space-time-raw",
-        "prefix": "raw/prediction/classifier/to_be_processed"
+        # "s3_bucket": "space-time-raw",
+        # "prefix": "raw/prediction/classifier/to_be_processed"
     }
     handler(event=event)
     """
